@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="9.0.0" />
+	<PackageReference Include="VeracodeCoreServices" Version="2020.6.18.212928" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VeraData.DataAccess\VeraData.DataAccess.csproj" />
+  </ItemGroup>
+
+</Project>
