@@ -16,7 +16,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="3.1.5" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.1.5" />
-    <PackageReference Include="VeracodeCoreServices" Version="2020.6.19.130034" />
+    <PackageReference Include="VeracodeCoreServices" Version="2020.6.23.205017" />
   </ItemGroup>
 
   <ItemGroup>

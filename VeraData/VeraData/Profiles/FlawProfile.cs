@@ -18,7 +18,7 @@ namespace VeraData.Profiles
             .ForMember(dest => dest.PrototypeFunction, opt => opt.MapFrom(src => src.functionprototype))
             .ForMember(dest => dest.Function, opt => opt.MapFrom(src => src.procedure_name))
             .ForMember(dest => dest.RemediationStatus, opt => opt.MapFrom(src => src.remediation_status))
-            .ForMember(dest => dest.SeverityId, opt => opt.MapFrom(src => ParseInt(src.severity)))
+            .ForMember(dest => dest.SeverityId, opt => opt.MapFrom(src => ParseInt(src.severity)+1))
             .ForMember(dest => dest.Count, opt => opt.MapFrom(src => ParseInt(src.count)))
             .ForMember(dest => dest.VeracodeCategoryId, opt => opt.MapFrom(src => ParseInt(src.categoryid)))
             .ForMember(dest => dest.VeracodeCweId, opt => opt.MapFrom(src => ParseInt(src.cweid)))

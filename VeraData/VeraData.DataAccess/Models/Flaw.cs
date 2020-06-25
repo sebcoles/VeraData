@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 using VeraData.DataAccess.Models;
 
@@ -19,5 +20,8 @@ namespace VeraData.DataAccess
         public string PrototypeFunction { get; set; }
         public string Function { get; set; }
         public int Count { get; set; }
+        public string SourceFileName { get; set; }
+        public string SourceFilePath { get; set; }
+        public List<MitigationAction> MitigationActions { get; set; }
     }
 }

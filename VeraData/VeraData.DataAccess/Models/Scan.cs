@@ -17,5 +17,8 @@ namespace VeraData.DataAccess
         public DateTime ScanEnd { get; set; }
         public List<UploadFile> UploadFiles { get; set; }
         public List<Module> Modules { get; set; }
+        public List<Flaw> Flaws { get; set; }
+        public List <PreScanMessage> PreScanErrors { get; set; }
+        public List<SourceFile> SourceFiles { get; set; }
     }
 }

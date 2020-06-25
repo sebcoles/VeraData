@@ -6,7 +6,6 @@ namespace VeraData.DataAccess.Models
 {
     public class SourceFile : BaseEntity
     {
-        public List<Flaw> Flaws { get; set; }
         public string Name { get; set; }
         public string Path { get; set; }
     }}

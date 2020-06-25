@@ -42,8 +42,7 @@ namespace VeraData
             serviceCollection.AddScoped<IGenericRepository<UploadFile>, GenericRepository<UploadFile>>();
             serviceCollection.AddScoped<IGenericRepository<Flaw>, GenericRepository<Flaw>>();
             serviceCollection.AddScoped<IGenericRepository<Module>, GenericRepository<Module>>();
-            serviceCollection.AddScoped<IGenericRepository<ModuleFile>, GenericRepository<ModuleFile>>();
-            serviceCollection.AddScoped<IGenericRepository<PreScanError>, GenericRepository<PreScanError>>();
+            serviceCollection.AddScoped<IGenericRepository<PreScanMessage>, GenericRepository<PreScanMessage>>();
             serviceCollection.AddScoped<IGenericRepository<Scan>, GenericRepository<Scan>>();
             serviceCollection.AddScoped<IGenericRepository<Sandbox>, GenericRepository<Sandbox>>();
             serviceCollection.AddScoped<IGenericRepository<SourceFile>, GenericRepository<SourceFile>>();
@@ -97,98 +96,88 @@ namespace VeraData
             else
                 Console.WriteLine($"Preparing to retrieve {options.BuildLimit}. [Press Y to continue]");
 
-            if(!options.Force)
+            if (!options.Force)
                 if (Console.ReadLine().ToLower() != "y")
                     return 1;
 
-            var builds = new List<BuildInfoBuildType>();
+            var scans = new List<BuildInfoBuildType>();
             foreach (var missedBuild in missingBuilds)
-                builds.Add(veracodeRepo.GetBuildDetail(options.AppId, $"{missedBuild}").build);
+                scans.Add(veracodeRepo.GetBuildDetail(options.AppId, $"{missedBuild}").build);
 
-            // scans
-            SaveScans(builds, ref app);
-            appRepo.Update(app);
+            app.Scans = mappingService.Scans(scans.ToArray()).ToList();
 
-            // sandboxes
             var sandboxes = veracodeRepo.GetSandboxesForApp(options.AppId).ToList();
-            SaveSandboxes(sandboxes, ref app);
-            appRepo.Update(app);
+            app.Sandboxes = mappingService.Sandboxes(sandboxes.ToArray()).ToList();
+           
+            var cats = categoryRepo.GetAll().ToList();
+            var cwes = cweRepo.GetAll().ToList();
+            var newCatagories = new List<Category>();
+            var newCwes = new List<Cwe>();
 
-            // upload files
             foreach (var scan in app.Scans)
             {
                 var uploadFiles = veracodeRepo.GetFilesForBuild(options.AppId, $"{scan.VeracodeId}").ToList();
-                scan.UploadFiles = mappingService.UploadFiles(uploadFiles.ToArray()).ToList();
                 var modules = veracodeRepo.GetModules(options.AppId, $"{scan.VeracodeId}").ToList();
+                var entryPoints = veracodeRepo.GetEntryPoints($"{scan.VeracodeId}");
+                var mitgations = veracodeRepo.GetAllMitigationsForBuild($"{scan.VeracodeId}");
+                var flaws = veracodeRepo.GetFlaws($"{scan.VeracodeId}");
+
+                scan.UploadFiles = mappingService.UploadFiles(uploadFiles.ToArray()).ToList();
                 scan.Modules = mappingService.Modules(modules.ToArray()).ToList();
 
-                foreach(var module in scan.Modules)
-                {
-                    var flaws = veracodeRepo.GetFlaws($"{scan.VeracodeId}");
-                    var oldCats = categoryRepo.GetAll().ToArray();
-                    var oldCwe = cweRepo.GetAll().ToArray();
+                foreach (var module in scan.Modules)
+                    module.EntryPoint = entryPoints.Any(x => x.name == module.Name);
 
-                    var categories = flaws
-                        .Where(x => !oldCats.Any(y => $"{y.Id}".Equals(x.categoryid)))
-                        .Select(x => new Category { Description = x.categoryname, VeracodeId = Int32.Parse(x.categoryid) })
-                        .GroupBy(x => x.VeracodeId)
-                        .Select(x => x.First())
-                        .ToList();
-
-                    var cwes = flaws
-                        .Where(x => !oldCwe.Any(y => $"{y.Id}".Equals(x.cweid)))
-                        .Select(x => new Cwe { 
-                            RemediationEffort = Int32.Parse(x.remediationeffort),
-                            Description = x.remediation_desc,
-                            Exploitability = x.exploitdifficulty,
-                            VeracodeId = Int32.Parse(x.cweid) })
-                        .GroupBy(x => x.VeracodeId)
-                        .Select(x => x.First())
-                        .ToList();
-
-                    module.SourceFiles = mappingService.SourceFiles(flaws)
-                        .GroupBy(x => new { x.Path, x.Name })
-                        .Select(x => x.First())
-                        .ToList();
-
-                    foreach (var sourceFile in module.SourceFiles)
-                    {
-                        var fileFlaws = flaws
-                            .Where(x => x.sourcefile == sourceFile.Name 
-                            && x.sourcefilepath == sourceFile.Path).ToArray();
-
-                        sourceFile.Flaws = mappingService.Flaws(fileFlaws).ToList();
-
-                        foreach (var flaw in sourceFile.Flaws)
-                        {
-                            flaw.Category = categories.SingleOrDefault(x => x.VeracodeId == flaw.VeracodeCategoryId);
-                            flaw.Cwe = cwes.SingleOrDefault(x => x.VeracodeId == flaw.VeracodeCweId);
-                        }
-                    }               
-
-                }
-
+                scan.Flaws = mappingService.Flaws(flaws).ToList();
                 scan.UploadFiles = mappingService.UploadFiles(uploadFiles.ToArray()).ToList();
+                scan.SourceFiles = mappingService.SourceFiles(flaws)
+                    .GroupBy(x => new { x.Path, x.Name })
+                    .Select(x => x.First())
+                    .ToList();
+
+                var currentCategories = flaws
+                    .Where(x => !cats.Any(y => $"{y.VeracodeId}".Equals(x.categoryid)))
+                    .Where(x => !newCatagories.Any(y => $"{y.VeracodeId}".Equals(x.categoryid)))
+                    .GroupBy(x => x.categoryid)
+                    .Select(x => x.First())
+                    .ToArray();
+                var mappedCategories = mappingService.Cetegories(currentCategories).ToList();
+                newCatagories.AddRange(mappedCategories);
+
+                var currentCwes = flaws
+                    .Where(x => !cwes.Any(y => $"{y.VeracodeId}".Equals(x.cweid)))
+                    .Where(x => !newCwes.Any(y => $"{y.VeracodeId}".Equals(x.cweid)))
+                    .GroupBy(x => x.cweid)
+                    .Select(x => x.First())
+                    .ToArray();
+                var mappedCwes = mappingService.Cwe(currentCwes).ToList();
+                newCwes.AddRange(mappedCwes);
+
+                var convertedFlaws = mitgations.Select(x => new { MitigationActions = mappingService.Mitigations(x.mitigation_action), VeracodeId = x.flaw_id }).ToArray();
+
+                foreach (var flaw in scan.Flaws.Where(x => convertedFlaws.Any(z => x.VeracodeId == z.VeracodeId)))
+                    flaw.MitigationActions = convertedFlaws
+                        .Single(x => x.VeracodeId == flaw.VeracodeId)
+                        .MitigationActions
+                        .ToList();
+            }
+
+            categoryRepo.Create(newCatagories);
+            cweRepo.Create(newCwes);
+
+            foreach(var scan in app.Scans)
+            {
+                foreach(var flaw in scan.Flaws)
+                {
+                    flaw.Category = newCatagories.SingleOrDefault(x => x.VeracodeId == flaw.VeracodeCategoryId);
+                    flaw.Cwe = newCwes.SingleOrDefault(x => x.VeracodeId == flaw.VeracodeCweId);
+                }
             }
 
             appRepo.Update(app);
             return 1;
         }
 
-        private static void SaveScans(List<BuildInfoBuildType> entites, ref Application app)
-        {
-            var mapper = _serviceProvider.GetService<IMappingService>();
-            var mappedScans = mapper.Scans(entites.ToArray()).ToList();
-            app.Scans = mappedScans;
-        }
-
-        private static void SaveSandboxes(List<SandboxType> entites, ref Application app)
-        {
-            var sandboxRepo = _serviceProvider.GetService<IGenericRepository<Sandbox>>();
-            var mapper = _serviceProvider.GetService<IMappingService>();
-            var sandboxes = mapper.Sandboxes(entites.ToArray()).ToList();
-            app.Sandboxes = sandboxes;
-        }
         static int HandleParseError(IEnumerable<Error> errs)
         {
             return 1;

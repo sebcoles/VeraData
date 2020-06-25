@@ -10,7 +10,7 @@ using VeraData.DataAccess;
 namespace VeraData.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20200620115157_init")]
+    [Migration("20200624080524_init")]
     partial class init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -49,11 +49,17 @@ namespace VeraData.DataAccess.Migrations
                     b.Property<string>("RemediationStatus")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("ScanId")
+                        .HasColumnType("int");
+
                     b.Property<int>("SeverityId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("SourceFileId")
-                        .HasColumnType("int");
+                    b.Property<string>("SourceFileName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SourceFilePath")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("VeracodeCategoryId")
                         .HasColumnType("int");
@@ -70,9 +76,9 @@ namespace VeraData.DataAccess.Migrations
 
                     b.HasIndex("CweId");
 
-                    b.HasIndex("SeverityId");
+                    b.HasIndex("ScanId");
 
-                    b.HasIndex("SourceFileId");
+                    b.HasIndex("SeverityId");
 
                     b.ToTable("Flaws");
                 });
@@ -120,13 +126,13 @@ namespace VeraData.DataAccess.Migrations
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("Exploitability")
                         .HasColumnType("int");
 
                     b.Property<bool>("Pci")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PolicyImpact")
                         .HasColumnType("bit");
 
                     b.Property<int>("RemediationEffort")
@@ -138,6 +144,35 @@ namespace VeraData.DataAccess.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Cwes");
+                });
+
+            modelBuilder.Entity("VeraData.DataAccess.Models.MitigationAction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Comment")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("FlawId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reviewer")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FlawId");
+
+                    b.ToTable("MitigationActions");
                 });
 
             modelBuilder.Entity("VeraData.DataAccess.Models.MitigationStatus", b =>
@@ -162,23 +197,20 @@ namespace VeraData.DataAccess.Migrations
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<int?>("AddedId")
-                        .HasColumnType("int");
-
                     b.Property<bool>("EntryPoint")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HasFatalErrors")
                         .HasColumnType("bit");
 
                     b.Property<string>("Hash")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("ModifiedId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("RemovedId")
-                        .HasColumnType("int");
+                    b.Property<string>("Platform")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("ScanId")
                         .HasColumnType("int");
@@ -186,56 +218,41 @@ namespace VeraData.DataAccess.Migrations
                     b.Property<double>("Size")
                         .HasColumnType("float");
 
+                    b.Property<string>("Status")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<long>("VeracodeId")
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("AddedId");
-
-                    b.HasIndex("ModifiedId");
-
-                    b.HasIndex("RemovedId");
 
                     b.HasIndex("ScanId");
 
                     b.ToTable("Modules");
                 });
 
-            modelBuilder.Entity("VeraData.DataAccess.Models.ModuleFile", b =>
+            modelBuilder.Entity("VeraData.DataAccess.Models.PreScanMessage", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<string>("Path")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ModuleFile");
-                });
-
-            modelBuilder.Entity("VeraData.DataAccess.Models.PreScanError", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<string>("Error")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Filename")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("ModuleId")
+                    b.Property<string>("Message")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("ScanId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("VeracodeModuleId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ModuleId");
+                    b.HasIndex("ScanId");
 
                     b.ToTable("PreScanError");
                 });
@@ -288,6 +305,9 @@ namespace VeraData.DataAccess.Migrations
                     b.Property<string>("Title")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("VeracodeId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.ToTable("Severities");
@@ -296,27 +316,38 @@ namespace VeraData.DataAccess.Migrations
                         new
                         {
                             Id = 1,
-                            Title = "Informational"
+                            Title = "None",
+                            VeracodeId = 0
                         },
                         new
                         {
                             Id = 2,
-                            Title = "Low"
+                            Title = "Informational",
+                            VeracodeId = 1
                         },
                         new
                         {
                             Id = 3,
-                            Title = "Medium"
+                            Title = "Low",
+                            VeracodeId = 2
                         },
                         new
                         {
                             Id = 4,
-                            Title = "High"
+                            Title = "Medium",
+                            VeracodeId = 3
                         },
                         new
                         {
                             Id = 5,
-                            Title = "Very High"
+                            Title = "High",
+                            VeracodeId = 4
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Title = "Very High",
+                            VeracodeId = 5
                         });
                 });
 
@@ -327,18 +358,18 @@ namespace VeraData.DataAccess.Migrations
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<int?>("ModuleId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Path")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("ScanId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("ModuleId");
+                    b.HasIndex("ScanId");
 
                     b.ToTable("SourceFiles");
                 });
@@ -499,41 +530,36 @@ namespace VeraData.DataAccess.Migrations
                         .WithMany()
                         .HasForeignKey("CweId");
 
+                    b.HasOne("VeraData.DataAccess.Scan", null)
+                        .WithMany("Flaws")
+                        .HasForeignKey("ScanId");
+
                     b.HasOne("VeraData.DataAccess.Models.Severity", "Severity")
                         .WithMany()
                         .HasForeignKey("SeverityId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
 
-                    b.HasOne("VeraData.DataAccess.Models.SourceFile", null)
-                        .WithMany("Flaws")
-                        .HasForeignKey("SourceFileId");
+            modelBuilder.Entity("VeraData.DataAccess.Models.MitigationAction", b =>
+                {
+                    b.HasOne("VeraData.DataAccess.Flaw", null)
+                        .WithMany("MitigationActions")
+                        .HasForeignKey("FlawId");
                 });
 
             modelBuilder.Entity("VeraData.DataAccess.Models.Module", b =>
                 {
-                    b.HasOne("VeraData.DataAccess.Models.ModuleFile", "Added")
-                        .WithMany()
-                        .HasForeignKey("AddedId");
-
-                    b.HasOne("VeraData.DataAccess.Models.ModuleFile", "Modified")
-                        .WithMany()
-                        .HasForeignKey("ModifiedId");
-
-                    b.HasOne("VeraData.DataAccess.Models.ModuleFile", "Removed")
-                        .WithMany()
-                        .HasForeignKey("RemovedId");
-
                     b.HasOne("VeraData.DataAccess.Scan", null)
                         .WithMany("Modules")
                         .HasForeignKey("ScanId");
                 });
 
-            modelBuilder.Entity("VeraData.DataAccess.Models.PreScanError", b =>
+            modelBuilder.Entity("VeraData.DataAccess.Models.PreScanMessage", b =>
                 {
-                    b.HasOne("VeraData.DataAccess.Models.Module", null)
+                    b.HasOne("VeraData.DataAccess.Scan", null)
                         .WithMany("PreScanErrors")
-                        .HasForeignKey("ModuleId");
+                        .HasForeignKey("ScanId");
                 });
 
             modelBuilder.Entity("VeraData.DataAccess.Models.Sandbox", b =>
@@ -545,9 +571,9 @@ namespace VeraData.DataAccess.Migrations
 
             modelBuilder.Entity("VeraData.DataAccess.Models.SourceFile", b =>
                 {
-                    b.HasOne("VeraData.DataAccess.Models.Module", null)
+                    b.HasOne("VeraData.DataAccess.Scan", null)
                         .WithMany("SourceFiles")
-                        .HasForeignKey("ModuleId");
+                        .HasForeignKey("ScanId");
                 });
 
             modelBuilder.Entity("VeraData.DataAccess.Models.UploadFile", b =>

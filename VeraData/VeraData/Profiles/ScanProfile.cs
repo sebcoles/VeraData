@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
+using System.Linq;
 using VeracodeService.Models;
 using VeraData.DataAccess;
+using VeraData.DataAccess.Models;
 
 namespace VeraData.Profiles
 {
@@ -16,7 +18,8 @@ namespace VeraData.Profiles
             .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.version))
             .ForMember(dest => dest.ScanStatus, opt => opt.MapFrom(src => src.analysis_unit[0].status))
             .ForMember(dest => dest.ScanEnd, opt => opt.MapFrom(src => src.analysis_unit[0].published_date))
-            .ForMember(dest => dest.ScanType, opt => opt.MapFrom(src => src.analysis_unit[0].analysis_type));
+            .ForMember(dest => dest.ScanType, opt => opt.MapFrom(src => src.analysis_unit[0].analysis_type))
+            .ForMember(dest => dest.PreScanErrors, opt => opt.Ignore());
         }
     }
 }

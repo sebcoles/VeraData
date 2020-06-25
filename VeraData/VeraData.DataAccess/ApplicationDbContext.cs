@@ -11,8 +11,7 @@ namespace VeraData.DataAccess
         public DbSet<Flaw> Flaws { get; set; }
         public DbSet<MitigationStatus> MitigationStatuses { get; set; }
         public DbSet<Module> Modules { get; set; }
-        public DbSet<ModuleFile> ModuleFiles { get; set; }
-        public DbSet<ModuleFile> PreScanError { get; set; }
+        public DbSet<PreScanMessage> PreScanError { get; set; }
         public DbSet<RemediationStatus> RemediationStatuses { get; set; }
         public DbSet<Sandbox> Sandboxes { get; set; }
         public DbSet<Scan> Scans { get; set; }
@@ -20,27 +19,19 @@ namespace VeraData.DataAccess
         public DbSet<SourceFile> SourceFiles { get; set; }
         public DbSet<UploadFile> UploadFiles { get; set; }
         public DbSet<UploadFileStatus> UploadFileStatuses { get; set; }
+        public DbSet<MitigationAction> MitigationActions { get; set; }
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         { }
-
-        public ApplicationDbContext()
-    : base()
-        { }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseSqlServer("Server=(localdb)\\mssqllocaldb;Database=VeraData;MultipleActiveResultSets=true;Integrated Security=true;");
-        }
-
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Severity>().HasData(
-                new Severity { Id = 1, Title = "Informational" },
-                new Severity { Id = 2, Title = "Low" },
-                new Severity { Id = 3, Title = "Medium" },
-                new Severity { Id = 4, Title = "High" },
-                new Severity { Id = 5, Title = "Very High" }
+                new Severity { Id = 1, VeracodeId = 0, Title = "None" },
+                new Severity { Id = 2, VeracodeId = 1, Title = "Informational" },
+                new Severity { Id = 3, VeracodeId = 2, Title = "Low" },
+                new Severity { Id = 4, VeracodeId = 3, Title = "Medium" },
+                new Severity { Id = 5, VeracodeId = 4, Title = "High" },
+                new Severity { Id = 6, VeracodeId = 5, Title = "Very High" }
                 );
 
             modelBuilder.Entity<UploadFileStatus>().HasData(
